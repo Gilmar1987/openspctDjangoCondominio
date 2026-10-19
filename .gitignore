@@ -1,0 +1,3 @@
+# OpenSpec planning artifacts are maintained in the separate planning store.
+/openspec/*
+!/openspec/config.yaml
