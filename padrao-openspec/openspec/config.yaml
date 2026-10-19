@@ -5,11 +5,32 @@ context: |
   Escreva os artefatos em pt-BR, salvo quando o projeto consumidor definir outro idioma.
   Preserve os títulos estruturais do OpenSpec e as palavras-chave SHALL/MUST em inglês.
 
-  Este é um template neutro. Não presuma domínio, linguagem, framework, arquitetura,
-  banco de dados, autenticação, observabilidade, testes ou ambiente de deploy.
-  Use openspec/project.md e o contexto fornecido pelo projeto consumidor para obter
-  as decisões específicas. Se uma decisão necessária estiver ausente, pergunte ou
-  registre explicitamente a suposição no artefato pertinente.
+  Projeto: controleCondominio — cadastro de proprietários, seus apartamentos e
+  moradores. Público misto (B2B2C), MVP pequeno (até 100 usuários ativos), multi-tenant
+  por coluna tenant_id, trata dados pessoais sujeitos à LGPD. Detalhes em
+  openspec/project.md e openspec/project-setup.md.
+
+  Arquitetura: monólito Django em Vertical Slices (uma fatia por feature, com seu
+  handler); regras de negócio em Domain Model rico (DDD); módulos se comunicam por
+  REST/HTTP, sem importar internals de outra fatia; monorepo.
+
+  Stack: Python + Django + Django REST Framework; front-end renderizado pelo próprio
+  Django; PostgreSQL self-hosted em contêiner; Django ORM; validação com Pydantic;
+  filas com Celery (broker Redis ou RabbitMQ, a decidir); dependências via pip +
+  requirements.txt; execução local via docker-compose. Sem autenticação no MVP.
+  Sem deploy em produção; apenas ambiente de desenvolvimento local; secrets em .env.
+
+  Convenções: código em inglês, textos de interface em pt-BR (sem i18n). GitHub Flow
+  com PR para main; PR exige aprovação + CI verde (GitHub Actions rodando testes
+  unitários). Pytest; 100% de cobertura nos módulos de domínio com TDD estrito; sem
+  testes E2E. Logs em stdout, sem monitoramento de erros nem tracing.
+
+  Dados pessoais: todo tenant_id MUST ser filtrado em consultas; dados pessoais MUST
+  ser anonimizados em logs e relatórios; campos sensíveis (ex.: CPF) MUST ser
+  criptografados na aplicação. Sem proteção contra ataques no MVP.
+
+  Se uma decisão necessária estiver ausente, pergunte ou registre explicitamente a
+  suposição no artefato pertinente.
 
   Toda mudança de comportamento deve ser planejada antes da implementação. Aplique
   as convenções e ferramentas reais do projeto consumidor; não introduza dependências
@@ -17,11 +38,6 @@ context: |
 
   Decisões de arquitetura duradouras ficam em openspec/adrs/. ADRs com status Accepted
   são restrições vigentes; contrariá-las exige uma nova ADR que as substitua.
-
-  Inicialização do projeto: se openspec/project.md ainda contiver "A definir" ou
-  "{{Nome do Projeto}}" em qualquer campo, o projeto não está inicializado. Não inicie
-  nenhuma change antes da inicialização. Informe o dev e oriente a rodar /opsx:init,
-  que conduz a entrevista completa e gera os artefatos de configuração do projeto.
 
   Disciplina de contexto: leia por inteiro, sem resumir, config.yaml, project.md, as
   ADRs Accepted relevantes, os artefatos da change, as specs afetadas e o código
@@ -57,6 +73,7 @@ operations:
     guidance:
       - Consultar todos os artefatos de planejamento antes de implementar
       - Usar ferramentas de teste, lint e build existentes no projeto consumidor
+      - Cobrir cenários de interface com verificação em navegador versionada no repositório, já que o projeto decidiu não ter E2E
       - Não marcar uma tarefa concluída enquanto o critério de validação não tiver sido atendido
       - "Antes de alterar código, conferir a seção ## Aprovação do proposal: sem ela, ou com Responsável Pendente, parar e pedir a aprovação ao usuário"
       - "Depois de 3 tentativas seguidas falhando no mesmo erro ou teste, parar, mostrar as tentativas e pedir orientação; se for preciso alterar mais de 5 arquivos fora do raio de impacto, parar e pedir confirmação"
