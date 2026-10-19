@@ -1,4 +1,4 @@
-# {{Nome do Projeto}} — Project Overview
+# Tarefas — Project Overview
 
 > Preencha este documento na inicialização do projeto. Substitua os exemplos e comentários por decisões reais; use `A definir` quando algo ainda estiver em aberto.
 
