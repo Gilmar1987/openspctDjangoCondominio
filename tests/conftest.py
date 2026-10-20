@@ -56,3 +56,19 @@ def make_owner(db):
         return owner_repository.add(Owner.create(condominium.id, name, cpf, email, phone))
 
     return make
+
+
+CPF_JOAO = "39053344705"
+
+
+@pytest.fixture
+def make_resident(db):
+    from residents import repository as resident_repository
+    from residents.domain import Resident
+
+    def make(condominium, apartment, name="João", cpf=CPF_JOAO, email=None, phone=None):
+        return resident_repository.add(
+            Resident.create(condominium.id, name, cpf, email, phone, apartment_id=apartment.id)
+        )
+
+    return make

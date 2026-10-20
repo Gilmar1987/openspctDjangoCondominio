@@ -103,11 +103,14 @@ def label(record) -> str:
     return " · ".join(parts)
 
 
-def selectable_for_owner(tenant_id, owner_id) -> list:
-    free = Q(owner_id__isnull=True)
-    if owner_id is not None:
-        free |= Q(owner_id=owner_id)
-    return list(_scoped(tenant_id).filter(free).order_by(*ORDERING))
+def selectable_for_owner(tenant_id, owner_id, include_owned=False) -> list:
+    scoped = _scoped(tenant_id)
+    if not include_owned:
+        free = Q(owner_id__isnull=True)
+        if owner_id is not None:
+            free |= Q(owner_id=owner_id)
+        scoped = scoped.filter(free)
+    return list(scoped.order_by(*ORDERING))
 
 
 def by_owner(tenant_id, owner_id) -> list:

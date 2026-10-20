@@ -3,7 +3,8 @@
 {% block content %}
   <div class="breadcrumb">
     <a href="{% url 'condominiums:list' %}">Condomínios</a> / {{ tenant.name }} ·
-    <a href="/condominios/{{ tenant.id }}/apartamentos/">Apartamentos</a>
+    <a href="/condominios/{{ tenant.id }}/apartamentos/">Apartamentos</a> ·
+    <a href="/condominios/{{ tenant.id }}/moradores/">Moradores</a>
   </div>
   <h1>Proprietários — {{ tenant.name }}</h1>
   <div class="toolbar"><a class="button" href="{% url 'owners:create' tenant.id %}">Novo proprietário</a></div>
@@ -13,7 +14,7 @@
       <tbody>
         {% for owner, count in rows %}
           <tr>
-            <td><a href="{% url 'owners:detail' tenant.id owner.id %}">{{ owner.name }}</a></td>
+            <td><a href="{% url 'owners:detail' tenant.id owner.id %}">{{ owner.name }}</a>{% if owner.resident_of %}<br><small>também é morador de {{ owner.resident_of.label }}</small>{% endif %}</td>
             <td>{{ owner.cpf_masked }}</td>
             <td>{{ owner.email|default_if_none:"—" }}</td>
             <td>{{ owner.phone|default_if_none:"—" }}</td>

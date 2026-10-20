@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from apartments import public as apartments
 from owners import repository
 from owners.domain import Owner
-from owners.features import detail_json, display
+from owners.features import detail_json, display, residences
 from tenancy.public import TenantRef, get_condominium_or_404
 
 
@@ -27,8 +27,9 @@ def api(request, condominium_id, owner_id):
 def page(request, condominium_id, owner_id):
     tenant = get_condominium_or_404(condominium_id)
     owner = handle(tenant, owner_id)
+    home = residences(tenant, [owner]).get(owner.id)
     return render(
         request,
         "owners/detail.html",
-        {"tenant": tenant, "owner": display(owner), "apartments": apartments.list_by_owner(tenant.id, owner.id)},
+        {"tenant": tenant, "owner": display(owner, home), "apartments": apartments.list_by_owner(tenant.id, owner.id)},
     )

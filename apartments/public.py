@@ -8,6 +8,7 @@ from apartments import repository
 
 __all__ = [
     "ApartmentRef",
+    "list_all",
     "list_selectable_for_owner",
     "list_by_owner",
     "count_by_owner",
@@ -26,6 +27,11 @@ class ApartmentRef:
 
 def _ref(record) -> ApartmentRef:
     return ApartmentRef(id=record.id, label=repository.label(record), owner_id=record.owner_id)
+
+
+def list_all(tenant_id) -> list[ApartmentRef]:
+    """Todos os apartamentos do condomínio, na ordem da listagem."""
+    return [_ref(r) for r in repository.selectable_for_owner(tenant_id, None, include_owned=True)]
 
 
 def list_selectable_for_owner(tenant_id, owner_id) -> list[ApartmentRef]:

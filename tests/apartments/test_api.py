@@ -157,6 +157,7 @@ def test_get_apartment(api_client, condo, make_apartment):
         "number": "301",
         "owner_id": None,
         "owner_name": None,
+        "resident_count": 0,
     }
 
 

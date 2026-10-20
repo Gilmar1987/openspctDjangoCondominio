@@ -81,12 +81,13 @@ class Person:
     ROLE_LABEL: ClassVar[str] = "pessoa"
 
     @classmethod
-    def create(cls, tenant_id, name, cpf, email=None, phone=None):
-        return cls(id=None, tenant_id=tenant_id, **_general_attributes(name, cpf, email, phone))
+    def create(cls, tenant_id, name, cpf, email=None, phone=None, **own):
+        """`own` traz os atributos próprios da subclasse (ex.: apartment_id do morador)."""
+        return cls(id=None, tenant_id=tenant_id, **_general_attributes(name, cpf, email, phone), **own)
 
-    def update(self, *, name, cpf, email, phone):
-        """Altera os atributos gerais; id e condomínio nunca mudam."""
-        return replace(self, **_general_attributes(name, cpf, email, phone))
+    def update(self, *, name, cpf, email, phone, **own):
+        """Altera os atributos gerais e os próprios da subclasse; id e condomínio nunca mudam."""
+        return replace(self, **_general_attributes(name, cpf, email, phone), **own)
 
     def with_id(self, person_id: uuid.UUID):
         return replace(self, id=person_id)

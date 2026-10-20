@@ -85,6 +85,11 @@ def names_by_id(tenant_id, owner_ids) -> dict:
     return dict(_scoped(tenant_id).filter(id__in=list(owner_ids)).values_list("id", "name"))
 
 
+def by_cpf_hashes(tenant_id, hashes) -> list[tuple]:
+    """(hash, id, nome) dos proprietários com esses hashes de CPF, sem decifrar (ADR-0017)."""
+    return list(_scoped(tenant_id).filter(cpf_hash__in=list(hashes)).values_list("cpf_hash", "id", "name"))
+
+
 def delete(tenant_id, owner_id) -> bool:
     deleted, _ = _scoped(tenant_id).filter(id=owner_id).delete()
     return deleted > 0

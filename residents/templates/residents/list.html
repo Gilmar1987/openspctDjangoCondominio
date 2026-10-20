@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Moradores — {{ tenant.name }}{% endblock %}
+{% block content %}
+  <div class="breadcrumb">
+    <a href="{% url 'condominiums:list' %}">Condomínios</a> / {{ tenant.name }} ·
+    <a href="/condominios/{{ tenant.id }}/apartamentos/">Apartamentos</a> ·
+    <a href="/condominios/{{ tenant.id }}/proprietarios/">Proprietários</a>
+  </div>
+  <h1>Moradores — {{ tenant.name }}</h1>
+  <div class="toolbar"><a class="button" href="{% url 'residents:create' tenant.id %}">Novo morador</a></div>
+  {% if rows %}
+    <table>
+      <thead><tr><th>Nome</th><th>CPF</th><th>Apartamento</th><th>Telefone</th><th>Proprietário?</th><th></th></tr></thead>
+      <tbody>
+        {% for resident in rows %}
+          <tr>
+            <td><a href="{% url 'residents:detail' tenant.id resident.id %}">{{ resident.name }}</a></td>
+            <td>{{ resident.cpf_masked }}</td>
+            <td>{{ resident.apartment_label }}</td>
+            <td>{{ resident.phone|default_if_none:"—" }}</td>
+            <td>{% if resident.also_owner %}também é proprietário ({{ resident.also_owner.apartment_count }} apartamento{{ resident.also_owner.apartment_count|pluralize }}){% else %}—{% endif %}</td>
+            <td class="actions">
+              <a href="{% url 'residents:update' tenant.id resident.id %}">Editar</a> ·
+              <a href="{% url 'residents:delete' tenant.id resident.id %}">Excluir</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">Nenhum morador cadastrado.</p>
+  {% endif %}
+{% endblock %}

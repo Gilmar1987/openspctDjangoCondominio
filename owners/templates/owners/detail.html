@@ -11,6 +11,7 @@
       <tr><th>CPF</th><td>{{ owner.cpf_masked }}</td></tr>
       <tr><th>E-mail</th><td>{{ owner.email|default_if_none:"—" }}</td></tr>
       <tr><th>Telefone</th><td>{{ owner.phone|default_if_none:"—" }}</td></tr>
+      <tr><th>Mora em</th><td>{% if owner.resident_of %}também é morador de {{ owner.resident_of.label }}{% else %}—{% endif %}</td></tr>
     </tbody>
   </table>
   <h2>Apartamentos</h2>
