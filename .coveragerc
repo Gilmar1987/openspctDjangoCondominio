@@ -1,0 +1,12 @@
+# Cobertura mínima de 100% exigida só nos módulos de domínio (decisão 5.6, ADR-0014).
+[run]
+branch = True
+include =
+    */domain.py
+omit =
+    tests/*
+
+[report]
+fail_under = 100
+show_missing = True
+skip_empty = True

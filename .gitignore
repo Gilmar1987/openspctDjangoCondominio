@@ -1,3 +1,12 @@
 # OpenSpec planning artifacts are maintained in the separate planning store.
 /openspec/*
 !/openspec/config.yaml
+
+# Ambiente local e segredos
+.env
+
+# Python e testes
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/

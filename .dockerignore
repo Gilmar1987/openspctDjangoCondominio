@@ -1,0 +1,10 @@
+.git
+.env
+.claude
+.agents
+.github
+openspec
+**/__pycache__
+.pytest_cache
+.coverage
+htmlcov
