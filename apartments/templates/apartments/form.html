@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ tenant.name }}{% endblock %}
+{% block content %}
+  <div class="breadcrumb">
+    <a href="{% url 'condominiums:list' %}">Condomínios</a> /
+    <a href="{% url 'apartments:list' tenant.id %}">{{ tenant.name }}</a>
+  </div>
+  <h1>{{ title }}</h1>
+  {% if errors.apartment %}
+    <ul class="form-errors">{% for error in errors.apartment %}<li>{{ error }}</li>{% endfor %}</ul>
+  {% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="field">
+      <label for="tower">Torre</label>
+      <input id="tower" name="tower" type="text" value="{{ values.tower|default_if_none:'' }}">
+      {% if errors.tower %}<ul class="field-error">{% for error in errors.tower %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <div class="field">
+      <label for="block">Bloco</label>
+      <input id="block" name="block" type="text" value="{{ values.block|default_if_none:'' }}">
+      {% if errors.block %}<ul class="field-error">{% for error in errors.block %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <div class="field">
+      <label for="floor">Andar</label>
+      <input id="floor" name="floor" type="text" inputmode="numeric" value="{{ values.floor|default_if_none:'' }}">
+      {% if errors.floor %}<ul class="field-error">{% for error in errors.floor %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <div class="field">
+      <label for="number">Número</label>
+      <input id="number" name="number" type="text" value="{{ values.number|default_if_none:'' }}">
+      {% if errors.number %}<ul class="field-error">{% for error in errors.number %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <button type="submit">Salvar</button>
+    <a class="button secondary" href="{% url 'apartments:list' tenant.id %}">Cancelar</a>
+  </form>
+{% endblock %}

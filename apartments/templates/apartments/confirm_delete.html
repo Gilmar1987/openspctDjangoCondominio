@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Excluir apartamento — {{ tenant.name }}{% endblock %}
+{% block content %}
+  <div class="breadcrumb">
+    <a href="{% url 'condominiums:list' %}">Condomínios</a> /
+    <a href="{% url 'apartments:list' tenant.id %}">{{ tenant.name }}</a>
+  </div>
+  <h1>Confirmar exclusão</h1>
+  <p>
+    Excluir definitivamente o apartamento
+    <strong>{% if apartment.tower %}Torre {{ apartment.tower }} · {% endif %}{% if apartment.block %}Bloco {{ apartment.block }} · {% endif %}Nº {{ apartment.number }}</strong>?
+    Esta ação não pode ser desfeita.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="danger">Excluir</button>
+    <a class="button secondary" href="{% url 'apartments:list' tenant.id %}">Cancelar</a>
+  </form>
+{% endblock %}
