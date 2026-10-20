@@ -34,50 +34,45 @@ e boas práticas de ambiente, integrada ao fluxo OpenSpec.
 
 ## Dockerfile — Estrutura padrão
 
-### .NET (multi-stage)
+O esqueleto vale para qualquer stack. Antes de escrever, leia a Stack Summary e os
+Comandos de verificação do `openspec/project.md`: a imagem base, o comando de build e o
+comando de entrada saem de lá.
 
 ```dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Estágio de build: imagem com o SDK ou toolchain da linguagem
+FROM <imagem-de-build> AS build
 WORKDIR /src
+# Copie primeiro só os manifestos de dependência, para aproveitar o cache de camadas
+COPY <manifestos-de-dependência> ./
+RUN <comando de instalação das dependências>
 COPY . .
-RUN dotnet publish -c Release -o /app/publish
+RUN <comando de build ou empacotamento>
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+# Estágio de runtime: imagem mínima, só com o necessário para executar
+FROM <imagem-de-runtime> AS runtime
 WORKDIR /app
-COPY --from=build /app/publish .
-RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
+COPY --from=build <artefato-gerado> .
+RUN <criação de um usuário não-root, conforme a imagem>
 USER appuser
-HEALTHCHECK --interval=30s --timeout=5s CMD curl -f http://localhost:8080/health || exit 1
-ENTRYPOINT ["dotnet", "<NomeDoProjeto>.dll"]
+HEALTHCHECK --interval=30s --timeout=5s CMD <checagem do endpoint de saúde> || exit 1
+EXPOSE <porta>
+CMD [<comando de entrada>]
 ```
 
-### Next.js (standalone output)
+### O que preencher por stack
 
-```dockerfile
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+| Marcador | Como decidir |
+|---|---|
+| `<imagem-de-build>` | Imagem oficial do SDK ou da linguagem, na versão registrada na Stack Summary |
+| `<manifestos-de-dependência>` | Os arquivos de lock e de dependências do projeto (por exemplo, `package-lock.json`, `requirements.txt`, `*.csproj`, `go.sum`) |
+| `<comando de build ou empacotamento>` | O comando de typecheck/build dos Comandos de verificação, ou o empacotamento da stack |
+| `<imagem-de-runtime>` | Imagem de runtime oficial, `-slim`, `alpine` ou `distroless`; para linguagens interpretadas, a mesma base enxuta da linguagem |
+| `<comando de entrada>` | O comando de execução em produção (servidor de aplicação), nunca o servidor de desenvolvimento |
 
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npm run build
-
-FROM node:20-alpine AS runtime
-WORKDIR /app
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-COPY --from=build /app/public ./public
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
-USER appuser
-HEALTHCHECK --interval=30s --timeout=5s CMD wget -qO- http://localhost:3000/api/health || exit 1
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
-
-> Next.js requer `output: 'standalone'` em `next.config.ts` para o modo standalone.
+Se a stack não separar build e runtime (por exemplo, uma linguagem interpretada sem
+etapa de compilação), mantenha os dois estágios só quando o de build instalar
+ferramentas que não devem ir para a imagem final; caso contrário, use um estágio e
+registre o motivo no `design.md`.
 
 ## docker-compose — Estrutura padrão
 
@@ -86,15 +81,14 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-8000}:<porta>"
     environment:
       - DATABASE_URL=${DATABASE_URL}
-      - NODE_ENV=development
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      test: ["CMD-SHELL", "<checagem do endpoint de saúde>"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -115,7 +109,7 @@ services:
 
   worker:
     build: .
-    command: ["node", "worker.js"]
+    command: [<comando do worker>]
     environment:
       - DATABASE_URL=${DATABASE_URL}
     depends_on:
@@ -131,15 +125,15 @@ volumes:
 ```text
 .git
 .gitignore
-node_modules
-.next
-dist
-bin
-obj
-*.md
 .env*
 !.env.example
+*.md
+# Acrescente as pastas de dependências e de build da stack, por exemplo:
+# node_modules, dist, build, .venv, __pycache__, bin, obj, target, vendor
 ```
+
+Use uma porta configurável (`APP_PORT` no exemplo): se a porta padrão já estiver em uso
+na máquina, o desenvolvedor troca no `.env` sem editar o compose.
 
 ## Integração com OpenSpec
 
@@ -148,7 +142,7 @@ Ao criar tarefas de containerização em `tasks.md`, use este padrão:
 ```markdown
 - [ ] Criar Dockerfile multi-stage para produção — verificar: `docker build -t app .` sem erro e imagem roda como non-root
 - [ ] Criar docker-compose com app, banco e worker — verificar: `docker compose up` sobe todos os serviços healthy
-- [ ] Adicionar .dockerignore — verificar: `docker build` não copia node_modules nem .env
+- [ ] Adicionar .dockerignore — verificar: `docker build` não copia dependências locais nem .env
 - [ ] Configurar health check no serviço app — verificar: `docker inspect` mostra status healthy após startup
 ```
 
@@ -164,4 +158,4 @@ Ao criar tarefas de containerização em `tasks.md`, use este padrão:
 ## Referência completa
 
 Veja [docker-guidelines.md](docker-guidelines.md) para exemplos avançados:
-multi-stage por stack, compose para múltiplos ambientes, secrets, redes e volumes.
+migrações na inicialização, compose para múltiplos ambientes, secrets, redes e volumes.

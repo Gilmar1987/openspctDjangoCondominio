@@ -162,6 +162,11 @@ In both branches, never create the root as a side effect: do not run `openspec i
 
    If the sync failed, or any capability does not match, report what differs and stop — do not archive. Nothing has moved and `changeRoot` is intact, so the user can fix the mismatch or re-run the sync and start the archive again.
 
+4a. **Check the archive authorization**: read the `## Aprovação` section of `proposal.md`.
+   - Missing section or `Responsável: Pendente`: stop; the change was never approved.
+   - `Escopo: archive`: check every `Condições` item; if one fails, stop and report it.
+   - `Escopo: apply`: ask the user to confirm the archive explicitly. When they do, append `- Archive: <YYYY-MM-DD>; Origem: "<their words>"` as the last item of the section, quoting your question too when their answer only makes sense with it. Do not change the other items. Without that confirmation, do not archive.
+
 5. **Perform the archive**
 
    Create an `archive` directory under `planningHome.changesDir` if it doesn't exist:
@@ -178,6 +183,8 @@ In both branches, never create the root as a side effect: do not run `openspec i
    ```bash
    mv "<changeRoot>" "<planningHome.changesDir>/archive/<target-name>"
    ```
+
+5a. **Commit the archive**: when the planning root is in a git repository, stage and commit the archive move, the main specs and the project overview: `git -C "<planningHome.root>" add -A -- openspec/changes openspec/specs openspec/project.md`, then `git -C "<planningHome.root>" commit -m "chore: archive <change-name>" -m "OpenSpec-Change: <change-name>" -- openspec/changes openspec/specs openspec/project.md`. Otherwise say the archive was not committed. Never push.
 
 6. **Display summary**
 

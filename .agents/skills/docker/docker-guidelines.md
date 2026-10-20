@@ -1,53 +1,35 @@
 # Docker Guidelines
 
-Referência completa de containerização para projetos .NET e Next.js.
+Referência de containerização para qualquer stack. Os valores concretos (imagens,
+comandos de build e de execução, porta) saem da Stack Summary e dos Comandos de
+verificação do `openspec/project.md`.
 
 ---
 
 ## Dockerfile
 
-### .NET 8 / 9 — Web API ou Minimal API
+### Multi-stage com migrações na inicialização
+
+Quando o projeto aplica migrações ao subir o contêiner, use um script de entrada que
+migra e depois substitui o processo pelo servidor:
 
 ```dockerfile
-# Build
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM <imagem-de-build> AS build
 WORKDIR /src
-COPY ["src/MeuProjeto.Api/MeuProjeto.Api.csproj", "src/MeuProjeto.Api/"]
-RUN dotnet restore "src/MeuProjeto.Api/MeuProjeto.Api.csproj"
+COPY <manifestos-de-dependência> ./
+RUN <comando de instalação das dependências>
 COPY . .
-WORKDIR "/src/src/MeuProjeto.Api"
-RUN dotnet publish -c Release -o /app/publish --no-restore
+RUN <comando de build ou empacotamento>
 
-# Runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM <imagem-de-runtime> AS runtime
 WORKDIR /app
-RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
-COPY --from=build /app/publish .
-USER appuser
-EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
-ENTRYPOINT ["dotnet", "MeuProjeto.Api.dll"]
-```
-
-### .NET 8 / 9 — com migrations automáticas
-
-```dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
-COPY . .
-RUN dotnet publish -c Release -o /app/publish
-
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
-WORKDIR /app
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
-COPY --from=build /app/publish .
+RUN <criação de um usuário não-root>
+COPY --from=build <artefato-gerado> .
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 USER appuser
-EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s CMD curl -f http://localhost:8080/health || exit 1
+EXPOSE <porta>
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3   CMD <checagem do endpoint de saúde> || exit 1
 ENTRYPOINT ["./entrypoint.sh"]
 ```
 
@@ -55,56 +37,19 @@ ENTRYPOINT ["./entrypoint.sh"]
 
 ```bash
 #!/bin/sh
-dotnet MeuProjeto.Api.dll migrate
-exec dotnet MeuProjeto.Api.dll
+set -e
+<comando de migração dos Comandos de verificação>
+exec <comando de entrada em produção>
 ```
 
-### Next.js 15 — App Router (standalone)
-
-Requer em `next.config.ts`:
-
-```ts
-const nextConfig = {
-  output: 'standalone',
-}
-export default nextConfig
-```
-
-```dockerfile
-# Dependências
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Build
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
-
-# Runtime
-FROM node:20-alpine AS runtime
-WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-COPY --from=build /app/public ./public
-COPY --from=build --chown=appuser:appgroup /app/.next/standalone ./
-COPY --from=build --chown=appuser:appgroup /app/.next/static ./.next/static
-USER appuser
-EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s CMD wget -qO- http://localhost:3000/api/health || exit 1
-CMD ["node", "server.js"]
-```
+Em produção com várias réplicas, prefira rodar a migração como uma etapa separada do
+deploy, para que duas réplicas não migrem ao mesmo tempo.
 
 ---
 
 ## docker-compose
 
-### Ambiente de desenvolvimento — Next.js + PostgreSQL + pg-boss worker
+### Ambiente de desenvolvimento — aplicação + PostgreSQL (+ worker opcional)
 
 ```yaml
 services:
@@ -112,26 +57,23 @@ services:
     build:
       context: .
       target: build
-    command: npm run dev
+    command: <comando de execução local dos Comandos de verificação>
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-8000}:<porta>"
     volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
+      - .:/src
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=http://localhost:3000
     depends_on:
       db:
         condition: service_healthy
 
+  # Só quando o projeto tiver processamento em background (ADR de jobs/filas).
   worker:
     build:
       context: .
       target: build
-    command: npm run worker
+    command: <comando do worker>
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
@@ -139,9 +81,9 @@ services:
         condition: service_healthy
 
   db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -158,42 +100,9 @@ volumes:
   postgres_data:
 ```
 
-### Ambiente de desenvolvimento — .NET + PostgreSQL
-
-```yaml
-services:
-  api:
-    build:
-      context: .
-      target: build
-    ports:
-      - "8080:8080"
-    environment:
-      - ConnectionStrings__Default=Host=db;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      - ASPNETCORE_ENVIRONMENT=Development
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: postgres:16-alpine
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
-```
+Ao montar o código como volume (`.:/src`), exclua do volume as pastas de dependências
+instaladas dentro do contêiner, com um volume anônimo por pasta (por exemplo,
+`- /src/node_modules` ou `- /src/.venv`).
 
 ### Produção — múltiplos ambientes com override
 
@@ -242,19 +151,22 @@ services:
 .git
 .gitignore
 
-# Dependências (reconstruídas no build)
+# Dependências (reconstruídas no build): mantenha só as da stack do projeto
 node_modules
-.pnp
-.pnp.js
+.venv
+venv
+vendor
 
-# Build outputs
-.next
-out
+# Build outputs e caches
 dist
 build
+out
 bin
 obj
+target
 publish
+__pycache__
+*.pyc
 
 # Ambiente e secrets
 .env
@@ -263,7 +175,9 @@ publish
 
 # Testes e cobertura
 coverage
-.nyc_output
+htmlcov
+.coverage
+.pytest_cache
 TestResults
 
 # IDE e OS
@@ -293,15 +207,15 @@ POSTGRES_USER=user
 POSTGRES_PASSWORD=password
 POSTGRES_DB=dbname
 
-# Autenticação
-NEXTAUTH_SECRET=your-secret-here
-NEXTAUTH_URL=http://localhost:3000
+# Aplicação
+APP_PORT=8000
+APP_SECRET_KEY=troque-por-um-valor-gerado-localmente
 
-# E-mail
-RESEND_API_KEY=re_xxxxxxxxxxxx
+# Integrações (uma linha por chave, sem valor real)
+EMAIL_API_KEY=
 
 # Feature flags
-WHATSAPP_ENABLED=false
+FEATURE_X_ENABLED=false
 ```
 
 ---
@@ -317,14 +231,14 @@ WHATSAPP_ENABLED=false
 
 ### Performance de build
 
-- Copiar arquivos de dependência (`package.json`, `*.csproj`) antes do código-fonte para aproveitar cache de camadas
+- Copiar os manifestos de dependência (por exemplo, `package.json`, `requirements.txt`, `*.csproj`, `go.mod`) antes do código-fonte para aproveitar o cache de camadas
 - Usar `--no-cache` apenas em CI; em desenvolvimento o cache acelera o ciclo
-- Preferir `npm ci` a `npm install` em builds reproduzíveis
+- Instalar dependências a partir do lockfile em builds reproduzíveis (por exemplo, `npm ci`, `pip install -r requirements.txt` com versões fixadas, `dotnet restore --locked-mode`)
 
 ### Health check
 
 - Todo serviço de longa duração deve ter `HEALTHCHECK`
-- Expor um endpoint `/health` ou `/api/health` que retorne 200 quando o serviço estiver pronto
+- Expor um endpoint de saúde (por exemplo, `/health`) que retorne 200 quando o serviço estiver pronto
 - Usar `--start-period` para dar tempo ao serviço inicializar antes das verificações
 
 ### Redes
