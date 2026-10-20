@@ -24,6 +24,15 @@ class ApartmentRecord(TenantOwnedModel):
     block = models.CharField(max_length=20, null=True, blank=True)
     floor = models.SmallIntegerField(null=True, blank=True)
     number = models.CharField(max_length=10)
+    # Proprietário (1:N). Referência por string para não importar owners.models (ADR-0015).
+    owner = models.ForeignKey(
+        "owners.OwnerRecord",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        db_column="owner_id",
+        related_name="+",
+    )
 
     class Meta:
         db_table = "apartment"

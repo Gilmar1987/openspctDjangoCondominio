@@ -31,6 +31,16 @@
       <input id="number" name="number" type="text" value="{{ values.number|default_if_none:'' }}">
       {% if errors.number %}<ul class="field-error">{% for error in errors.number %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
     </div>
+    <div class="field">
+      <label for="owner_id">Proprietário</label>
+      <select id="owner_id" name="owner_id">
+        <option value="">Sem proprietário</option>
+        {% for owner in owners %}
+          <option value="{{ owner.id }}"{% if values.owner_id|stringformat:"s" == owner.id|stringformat:"s" %} selected{% endif %}>{{ owner.name }}</option>
+        {% endfor %}
+      </select>
+      {% if errors.owner_id %}<ul class="field-error">{% for error in errors.owner_id %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
     <button type="submit">Salvar</button>
     <a class="button secondary" href="{% url 'apartments:list' tenant.id %}">Cancelar</a>
   </form>

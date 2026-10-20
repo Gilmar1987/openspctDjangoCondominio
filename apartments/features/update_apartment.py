@@ -6,7 +6,15 @@ from rest_framework.response import Response
 
 from apartments import repository
 from apartments.domain import Apartment, DuplicateApartmentError, ensure_unique
-from apartments.features import as_json, duplicate_errors, form_values
+from apartments.features import (
+    OwnerNotFoundError,
+    as_json_with_owner,
+    check_owner,
+    duplicate_errors,
+    form_context,
+    form_values,
+    owner_errors,
+)
 from apartments.features.get_apartment import handle as get_apartment
 from apartments.inputs import ApartmentInput, parse_apartment
 from shared.http import validation_error_response
@@ -17,7 +25,10 @@ TEMPLATE = "apartments/form.html"
 
 def handle(tenant: TenantRef, apartment_id, data: ApartmentInput) -> Apartment:
     current = get_apartment(tenant, apartment_id)
-    updated = current.update(number=data.number, tower=data.tower, block=data.block, floor=data.floor)
+    check_owner(tenant, data.owner_id)
+    updated = current.update(
+        number=data.number, tower=data.tower, block=data.block, floor=data.floor, owner_id=data.owner_id
+    )
     ensure_unique(updated, repository.find_same_key(updated))
     if repository.update(updated) is None:
         raise Http404
@@ -25,7 +36,7 @@ def handle(tenant: TenantRef, apartment_id, data: ApartmentInput) -> Apartment:
 
 
 def api(request, condominium_id, apartment_id):
-    """PUT: substituição completa; campos omitidos ficam ausentes (D8)."""
+    """PUT: substituição completa; campos omitidos (inclusive owner_id) ficam ausentes (D8)."""
     tenant = get_condominium_or_404(condominium_id)
     get_apartment(tenant, apartment_id)
     data, errors = parse_apartment(request.data)
@@ -35,14 +46,22 @@ def api(request, condominium_id, apartment_id):
         apartment = handle(tenant, apartment_id, data)
     except DuplicateApartmentError as exc:
         return validation_error_response(duplicate_errors(exc))
-    return Response(as_json(apartment))
+    except OwnerNotFoundError as exc:
+        return validation_error_response(owner_errors(exc))
+    return Response(as_json_with_owner(tenant, apartment))
 
 
 @require_http_methods(["GET", "POST"])
 def page(request, condominium_id, apartment_id):
     tenant = get_condominium_or_404(condominium_id)
     current = get_apartment(tenant, apartment_id)
-    context = {"tenant": tenant, "title": "Editar apartamento", "values": form_values(current), "errors": {}}
+    context = {
+        "tenant": tenant,
+        "title": "Editar apartamento",
+        "values": form_values(current),
+        "errors": {},
+        **form_context(tenant),
+    }
     if request.method == "GET":
         return render(request, TEMPLATE, context)
     data, errors = parse_apartment(request.POST)
@@ -51,6 +70,8 @@ def page(request, condominium_id, apartment_id):
             handle(tenant, apartment_id, data)
         except DuplicateApartmentError as exc:
             errors = duplicate_errors(exc)
+        except OwnerNotFoundError as exc:
+            errors = owner_errors(exc)
         else:
             messages.success(request, "Apartamento atualizado.")
             return redirect("apartments:list", condominium_id=tenant.id)

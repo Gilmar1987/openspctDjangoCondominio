@@ -1,4 +1,5 @@
 import re
+import uuid
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -6,7 +7,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from shared.http import request_mapping
 from shared.validation import to_ptbr_errors
 
-LABELS = {"number": "número", "tower": "torre", "block": "bloco", "floor": "andar"}
+LABELS = {"number": "número", "tower": "torre", "block": "bloco", "floor": "andar", "owner_id": "proprietário"}
+OWNER_NOT_FOUND = "O proprietário não foi encontrado neste condomínio."
 
 FLOOR_MIN, FLOOR_MAX = -5, 200
 FLOOR_MESSAGE = f"O andar deve ser um número inteiro entre {FLOOR_MIN} e {FLOOR_MAX}."
@@ -27,6 +29,17 @@ class ApartmentInput(BaseModel):
     tower: Optional[str] = Field(default=None, max_length=20)
     block: Optional[str] = Field(default=None, max_length=20)
     floor: Optional[int] = None
+    owner_id: Optional[uuid.UUID] = None
+
+    @field_validator("owner_id", mode="before")
+    @classmethod
+    def owner_is_uuid(cls, value):
+        if _is_blank(value):
+            return None
+        try:
+            return uuid.UUID(str(value))
+        except ValueError:
+            raise ValueError(OWNER_NOT_FOUND)
 
     @field_validator("number", mode="before")
     @classmethod

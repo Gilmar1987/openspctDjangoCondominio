@@ -17,6 +17,11 @@ SECRET_KEY = _env("DJANGO_SECRET_KEY")
 DEBUG = _env("DJANGO_DEBUG", "false").lower() in ("1", "true", "yes")
 ALLOWED_HOSTS = [h.strip() for h in _env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 
+# Proteção de dados pessoais (ADR-0009): chave Fernet para cifrar campos sensíveis e
+# chave HMAC para o hash determinístico usado na unicidade do CPF.
+FIELD_ENCRYPTION_KEY = _env("FIELD_ENCRYPTION_KEY")
+CPF_HASH_KEY = _env("CPF_HASH_KEY")
+
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -25,8 +30,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "shared",
     "tenancy",
+    "people",
     "condominiums",
     "apartments",
+    "owners",
 ]
 
 MIDDLEWARE = [
@@ -77,6 +84,25 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+
+# Logs em stdout (decisão 6.1) com dados pessoais mascarados (ADR-0009).
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {"personal_data": {"()": "shared.logging.PersonalDataFilter"}},
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "filters": ["personal_data"],
+        },
+    },
+    "root": {"handlers": ["console"], "level": "INFO"},
+    # Substitui os handlers padrão do Django, que não passariam pelo filtro.
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.server": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
+}
 
 # Sem autenticação no MVP (ADR-0005): API aberta, sem SessionAuthentication e
 # portanto sem exigência de CSRF na API. As páginas HTML mantêm o CSRF nativo.

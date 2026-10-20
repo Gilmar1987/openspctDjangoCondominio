@@ -49,6 +49,11 @@ th { color: var(--muted); font-weight: 600; }
 form .field { margin-bottom: 14px; }
 form label { display: block; font-weight: 600; margin-bottom: 4px; }
 form input { width: 100%; max-width: 360px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+form fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; max-width: 360px; }
+form legend { font-weight: 600; }
+form label.checkbox { display: flex; gap: 8px; align-items: center; font-weight: normal; }
+form label.checkbox input { width: auto; }
+h2 { font-size: 1.15rem; margin: 20px 0 8px; }
 .field-error { color: var(--danger); margin: 4px 0 0; padding: 0; list-style: none; }
 .form-errors { color: var(--danger); list-style: none; padding: 0; }
 

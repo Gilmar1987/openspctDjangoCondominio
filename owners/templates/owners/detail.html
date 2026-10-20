@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ owner.name }} — {{ tenant.name }}{% endblock %}
+{% block content %}
+  <div class="breadcrumb">
+    <a href="{% url 'condominiums:list' %}">Condomínios</a> /
+    <a href="{% url 'owners:list' tenant.id %}">{{ tenant.name }} · Proprietários</a>
+  </div>
+  <h1>{{ owner.name }}</h1>
+  <table>
+    <tbody>
+      <tr><th>CPF</th><td>{{ owner.cpf_masked }}</td></tr>
+      <tr><th>E-mail</th><td>{{ owner.email|default_if_none:"—" }}</td></tr>
+      <tr><th>Telefone</th><td>{{ owner.phone|default_if_none:"—" }}</td></tr>
+    </tbody>
+  </table>
+  <h2>Apartamentos</h2>
+  {% if apartments %}
+    <ul>{% for apartment in apartments %}<li>{{ apartment.label }}</li>{% endfor %}</ul>
+  {% else %}
+    <p class="empty">Nenhum apartamento vinculado.</p>
+  {% endif %}
+  <div class="toolbar">
+    <a class="button" href="{% url 'owners:update' tenant.id owner.id %}">Editar</a>
+    <a class="button secondary" href="{% url 'owners:delete' tenant.id owner.id %}">Excluir</a>
+  </div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Proprietários — {{ tenant.name }}{% endblock %}
+{% block content %}
+  <div class="breadcrumb">
+    <a href="{% url 'condominiums:list' %}">Condomínios</a> / {{ tenant.name }} ·
+    <a href="/condominios/{{ tenant.id }}/apartamentos/">Apartamentos</a>
+  </div>
+  <h1>Proprietários — {{ tenant.name }}</h1>
+  <div class="toolbar"><a class="button" href="{% url 'owners:create' tenant.id %}">Novo proprietário</a></div>
+  {% if rows %}
+    <table>
+      <thead><tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Telefone</th><th>Apartamentos</th><th></th></tr></thead>
+      <tbody>
+        {% for owner, count in rows %}
+          <tr>
+            <td><a href="{% url 'owners:detail' tenant.id owner.id %}">{{ owner.name }}</a></td>
+            <td>{{ owner.cpf_masked }}</td>
+            <td>{{ owner.email|default_if_none:"—" }}</td>
+            <td>{{ owner.phone|default_if_none:"—" }}</td>
+            <td>{{ count }}</td>
+            <td class="actions">
+              <a href="{% url 'owners:update' tenant.id owner.id %}">Editar</a> ·
+              <a href="{% url 'owners:delete' tenant.id owner.id %}">Excluir</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">Nenhum proprietário cadastrado.</p>
+  {% endif %}
+{% endblock %}

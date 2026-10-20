@@ -29,6 +29,8 @@ jobs:
       DJANGO_SECRET_KEY: ci-only-not-secret
       DJANGO_DEBUG: "false"
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      FIELD_ENCRYPTION_KEY: IoayGRJEvebKkydbs6Vcu3o-mShuxfRNDFscf9E0BAo=
+      CPF_HASH_KEY: ci-only-not-secret-hash-key
       POSTGRES_DB: controle_condominio
       POSTGRES_USER: controle_condominio
       POSTGRES_PASSWORD: ci-password

@@ -38,9 +38,10 @@ class Apartment:
     block: Optional[str]
     floor: Optional[int]
     number: str
+    owner_id: Optional[uuid.UUID] = None
 
     @classmethod
-    def create(cls, tenant_id, number, tower=None, block=None, floor=None) -> "Apartment":
+    def create(cls, tenant_id, number, tower=None, block=None, floor=None, owner_id=None) -> "Apartment":
         return cls(
             id=None,
             tenant_id=tenant_id,
@@ -48,16 +49,18 @@ class Apartment:
             block=normalize_text(block),
             floor=floor,
             number=_required_number(number),
+            owner_id=owner_id,
         )
 
-    def update(self, *, number, tower, block, floor) -> "Apartment":
-        """Altera os dados da unidade; id e condomínio nunca mudam."""
+    def update(self, *, number, tower, block, floor, owner_id=None) -> "Apartment":
+        """Altera os dados da unidade e o proprietário; id e condomínio nunca mudam."""
         return replace(
             self,
             tower=normalize_text(tower),
             block=normalize_text(block),
             floor=floor,
             number=_required_number(number),
+            owner_id=owner_id,
         )
 
     def with_id(self, apartment_id: uuid.UUID) -> "Apartment":

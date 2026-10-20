@@ -6,7 +6,14 @@ from rest_framework.response import Response
 
 from apartments import repository
 from apartments.domain import Apartment, DuplicateApartmentError, ensure_unique
-from apartments.features import as_json, duplicate_errors
+from apartments.features import (
+    OwnerNotFoundError,
+    as_json_with_owner,
+    check_owner,
+    duplicate_errors,
+    form_context,
+    owner_errors,
+)
 from apartments.inputs import ApartmentInput, parse_apartment
 from shared.http import validation_error_response
 from tenancy.public import TenantRef, get_condominium_or_404
@@ -15,7 +22,8 @@ TEMPLATE = "apartments/form.html"
 
 
 def handle(tenant: TenantRef, data: ApartmentInput) -> Apartment:
-    apartment = Apartment.create(tenant.id, data.number, data.tower, data.block, data.floor)
+    check_owner(tenant, data.owner_id)
+    apartment = Apartment.create(tenant.id, data.number, data.tower, data.block, data.floor, data.owner_id)
     ensure_unique(apartment, repository.find_same_key(apartment))
     return repository.add(apartment)
 
@@ -29,13 +37,15 @@ def api(request, condominium_id):
         apartment = handle(tenant, data)
     except DuplicateApartmentError as exc:
         return validation_error_response(duplicate_errors(exc))
-    return Response(as_json(apartment), status=status.HTTP_201_CREATED)
+    except OwnerNotFoundError as exc:
+        return validation_error_response(owner_errors(exc))
+    return Response(as_json_with_owner(tenant, apartment), status=status.HTTP_201_CREATED)
 
 
 @require_http_methods(["GET", "POST"])
 def page(request, condominium_id):
     tenant = get_condominium_or_404(condominium_id)
-    context = {"tenant": tenant, "title": "Novo apartamento", "values": {}, "errors": {}}
+    context = {"tenant": tenant, "title": "Novo apartamento", "values": {}, "errors": {}, **form_context(tenant)}
     if request.method == "GET":
         return render(request, TEMPLATE, context)
     data, errors = parse_apartment(request.POST)
@@ -44,6 +54,8 @@ def page(request, condominium_id):
             handle(tenant, data)
         except DuplicateApartmentError as exc:
             errors = duplicate_errors(exc)
+        except OwnerNotFoundError as exc:
+            errors = owner_errors(exc)
         else:
             messages.success(request, "Apartamento criado.")
             return redirect("apartments:list", condominium_id=tenant.id)
