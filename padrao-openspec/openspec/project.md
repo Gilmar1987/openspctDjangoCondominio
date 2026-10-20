@@ -64,9 +64,9 @@ Navegador → Django (páginas e endpoints REST) → validação Pydantic → en
 | Capability | Estado | Change relacionada |
 |---|---|---|
 | `condominios` — cadastro mínimo de condomínios (tenants) e resolução do tenant pela URL | Implementada | `2026-10-19-cadastro-de-apartamentos` |
-| `apartamentos` — cadastro de unidades (torre, bloco, andar, número) por condomínio, com proprietário opcional | Implementada | `2026-10-19-cadastro-de-apartamentos`, `2026-10-20-cadastro-de-proprietarios` |
-| `proprietarios` — cadastro de proprietários (herda a base Pessoa, ADR-0016), CPF protegido e vínculo com N apartamentos | Implementada | `2026-10-20-cadastro-de-proprietarios` |
-| Cadastro de moradores | Planejada | — |
+| `apartamentos` — cadastro de unidades (torre, bloco, andar, número) por condomínio, com proprietário opcional, N moradores e exclusão bloqueada se houver moradores | Implementada | `2026-10-19-cadastro-de-apartamentos`, `2026-10-20-cadastro-de-proprietarios`, `2026-10-20-cadastro-de-moradores` |
+| `proprietarios` — cadastro de proprietários (herda a base Pessoa, ADR-0016), CPF protegido, vínculo com N apartamentos e indicação de quando também é morador | Implementada | `2026-10-20-cadastro-de-proprietarios`, `2026-10-20-cadastro-de-moradores` |
+| `moradores` — cadastro de moradores (herda a base Pessoa), um apartamento por morador no condomínio e reconhecimento do morador que também é proprietário (ADR-0017) | Implementada | `2026-10-20-cadastro-de-moradores` |
 
 ## Key Constraints
 
