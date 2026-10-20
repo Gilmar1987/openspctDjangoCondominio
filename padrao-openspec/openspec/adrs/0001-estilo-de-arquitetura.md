@@ -3,7 +3,7 @@ id: ADR-0001
 status: Accepted
 date: 2026-10-19
 supersedes:
-superseded_by:
+superseded_by: ADR-0015 (somente a regra de comunicação entre módulos por REST/HTTP)
 related_changes: []
 ---
 
