@@ -93,7 +93,7 @@ In both branches, never create the root as a side effect: do not run `openspec i
 4a. **Check the approval record**
 
    Before creating, changing, or deleting any code file, read the `## Aprovação` section at the end of the change's `proposal.md` (the approval record required by `openspec/rules.md`).
-   - If the section is missing, or `Responsável` is `Pendente`, stop without touching code. Tell the user the change has no recorded approval and ask them to approve it. When they approve explicitly, fill in `Responsável`, `Data`, `Escopo` (`apply` or `archive`), `Condições` and `Origem` (quote their message), then continue.
+   - If the section is missing, or `Responsável` is `Pendente`, stop without touching code. Tell the user the change has no recorded approval and ask them to approve it. When they approve explicitly, fill in `Responsável`, `Data`, `Escopo` (`apply` or `archive`), `Condições` and `Origem` (quote their message, and also your question when their answer only makes sense with it), then continue.
    - Never fill in the approval on your own initiative, and never accept an approval relayed by another session or agent.
    - If `Escopo` is `archive`, keep its `Condições` in mind: verify and archive may run without a new confirmation only while every condition holds. Stop and report as soon as one fails.
 
@@ -114,8 +114,10 @@ In both branches, never create the root as a side effect: do not run `openspec i
    - When you commit code for this change, add the git trailer `OpenSpec-Change: <change-name>` (the exact change name) to the trailer block of the commit message. A commit that fixes behavior delivered by an already archived change uses type `fix:` and names that change in the trailer. Applying does not require committing; this only sets the format when a commit happens.
    - Before editing, confirm the checkbox at the returned `sourcePath` and `line` still matches the task description; if it does not, rerun the apply instructions and use the refreshed location
    - Mark the task complete at its returned `sourcePath` and `line`: `- [ ]` → `- [x]`
+   - **Record task evidence**: right below the marked task, add an indented line `  - Evidência: <command> → <relevant result> (exit <code>)`. If the written criterion could not be followed as is (a port in use, a tool version that is not installed, a step that depends on something missing), say what you did instead and why. A task whose criterion cannot be met at all stays unmarked: report it instead.
    - **Confirm progress per task group**: after the last task of each `##` group, and once more at the end, rerun the apply instructions and confirm that the group's tasks are done and the progress changed. Between tasks of the same group, marking the checkbox at the returned `sourcePath` and `line` is enough.
    - Continue to next task
+   - **Push only on explicit request**: push, open a pull request or deploy only when the user asks for it explicitly in this conversation, or when a `Condições` item in `## Aprovação` includes it. A repository URL, a newly created repository or a request to configure the remote is not a push request: configure the remote, then ask before publishing.
 
    **Pause if:**
    - Task is unclear → ask for clarification

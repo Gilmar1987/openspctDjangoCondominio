@@ -212,8 +212,22 @@ In both branches, never create the root as a side effect: do not run `openspec i
    - Warnings: <n>
    - Sugestões: <n>
    - Não verificado: <check (reason); check (reason)>, or — when every check ran
+   - Cobertura fora da suíte: <scenario (where the evidence is; who ran it); ...>, or —
    - Avaliação: <the final assessment in one line>
+
+   Itens:
+
+   - [crítico] <one-line summary> (`<file:line>` when there is one)
+   - [warning] <one-line summary>
+   - [sugestão] <one-line summary>
+
+   Comandos:
+
+   - `<command>` → <relevant result> (exit <code>)
+   - `<command>` → <relevant result> (exit <code>; reused from apply)
    ```
+
+   Write one `Itens:` line per issue of the report, or `Itens: nenhum`. Under `Comandos:`, list every command you ran or reused, with a one-line result (for example, `130 passed`), never the full output; write `Comandos: nenhum (<reason>)` when the run was inspection only. `Cobertura fora da suíte` lists every scenario whose only evidence is a manual run, a script outside the repository or an external tool, as the **Evidence reuse** heuristic requires.
 
 **Verification Heuristics**
 
@@ -222,6 +236,7 @@ In both branches, never create the root as a side effect: do not run `openspec i
 - **Coherence**: Look for glaring inconsistencies, don't nitpick style
 - **False Positives**: When uncertain, prefer SUGGESTION over WARNING, WARNING over CRITICAL
 - **Actionability**: Every issue must have a specific recommendation with file/line references where applicable
+- **Project validation commands**: take test, lint, typecheck and build evidence from the commands in the "Comandos de verificação" section of `openspec/project.md` that apply to the change. A command recorded as missing or postponed there is reported as not verified with that reason; never invent a replacement.
 - **Evidence reuse**: Reuse a result recorded during apply only when it names the command and its exit code and no code file changed after it (check with `git log` and `git status`); otherwise run the command again. A check kept outside the repository (a manual run, a script in a temp folder) is not automated coverage: report the scenario as covered outside the suite.
 
 **Output Format**
