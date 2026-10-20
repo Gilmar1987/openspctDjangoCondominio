@@ -3,7 +3,7 @@ from rest_framework.response import Response
 
 from apartments import repository
 from apartments.domain import Apartment
-from apartments.features import as_json
+from apartments.features import as_json_with_owner
 from tenancy.public import TenantRef, get_condominium_or_404
 
 
@@ -16,4 +16,4 @@ def handle(tenant: TenantRef, apartment_id) -> Apartment:
 
 def api(request, condominium_id, apartment_id):
     tenant = get_condominium_or_404(condominium_id)
-    return Response(as_json(handle(tenant, apartment_id)))
+    return Response(as_json_with_owner(tenant, handle(tenant, apartment_id)))

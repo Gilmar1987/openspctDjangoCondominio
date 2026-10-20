@@ -1,19 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Apartamentos — {{ tenant.name }}{% endblock %}
 {% block content %}
-  <div class="breadcrumb"><a href="{% url 'condominiums:list' %}">Condomínios</a> / {{ tenant.name }}</div>
+  <div class="breadcrumb">
+    <a href="{% url 'condominiums:list' %}">Condomínios</a> / {{ tenant.name }} ·
+    <a href="/condominios/{{ tenant.id }}/proprietarios/">Proprietários</a>
+  </div>
   <h1>Apartamentos — {{ tenant.name }}</h1>
   <div class="toolbar"><a class="button" href="{% url 'apartments:create' tenant.id %}">Novo apartamento</a></div>
-  {% if apartments %}
+  {% if rows %}
     <table>
-      <thead><tr><th>Torre</th><th>Bloco</th><th>Andar</th><th>Número</th><th></th></tr></thead>
+      <thead><tr><th>Torre</th><th>Bloco</th><th>Andar</th><th>Número</th><th>Proprietário</th><th></th></tr></thead>
       <tbody>
-        {% for apartment in apartments %}
+        {% for apartment, owner_name in rows %}
           <tr>
             <td>{{ apartment.tower|default_if_none:"—" }}</td>
             <td>{{ apartment.block|default_if_none:"—" }}</td>
             <td>{{ apartment.floor|default_if_none:"—" }}</td>
             <td>{{ apartment.number }}</td>
+            <td>{{ owner_name|default_if_none:"—" }}</td>
             <td class="actions">
               <a href="{% url 'apartments:update' tenant.id apartment.id %}">Editar</a> ·
               <a href="{% url 'apartments:delete' tenant.id apartment.id %}">Excluir</a>

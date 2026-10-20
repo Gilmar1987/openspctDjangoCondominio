@@ -3,7 +3,7 @@
 from contextlib import contextmanager
 
 from django.db import IntegrityError, transaction
-from django.db.models import F
+from django.db.models import Count, F, Q
 
 from apartments.domain import Apartment, DuplicateApartmentError
 from apartments.models import UNIQUE_CONSTRAINT, ApartmentRecord, key_expressions
@@ -24,6 +24,7 @@ def _to_entity(record) -> Apartment:
         block=record.block,
         floor=record.floor,
         number=record.number,
+        owner_id=record.owner_id,
     )
 
 
@@ -33,6 +34,7 @@ def _fields(apartment: Apartment) -> dict:
         "block": apartment.block,
         "floor": apartment.floor,
         "number": apartment.number,
+        "owner_id": apartment.owner_id,
     }
 
 
@@ -86,3 +88,60 @@ def find_same_key(apartment: Apartment) -> list[Apartment]:
 def delete(tenant_id, apartment_id) -> bool:
     deleted, _ = _scoped(tenant_id).filter(id=apartment_id).delete()
     return deleted > 0
+
+
+# Vínculo com proprietários (usado por apartments.public, ADR-0015)
+
+
+def label(record) -> str:
+    parts = []
+    if record.tower:
+        parts.append(f"Torre {record.tower}")
+    if record.block:
+        parts.append(f"Bloco {record.block}")
+    parts.append(f"Nº {record.number}")
+    return " · ".join(parts)
+
+
+def selectable_for_owner(tenant_id, owner_id) -> list:
+    free = Q(owner_id__isnull=True)
+    if owner_id is not None:
+        free |= Q(owner_id=owner_id)
+    return list(_scoped(tenant_id).filter(free).order_by(*ORDERING))
+
+
+def by_owner(tenant_id, owner_id) -> list:
+    return list(_scoped(tenant_id).filter(owner_id=owner_id).order_by(*ORDERING))
+
+
+def by_ids(tenant_id, apartment_ids) -> list:
+    return list(_scoped(tenant_id).filter(id__in=list(apartment_ids)))
+
+
+def count_by_owner(tenant_id) -> dict:
+    rows = (
+        _scoped(tenant_id)
+        .filter(owner_id__isnull=False)
+        .values("owner_id")
+        .annotate(total=Count("id"))
+    )
+    return {row["owner_id"]: row["total"] for row in rows}
+
+
+def assign_owner(tenant_id, apartment_ids, owner_id) -> int:
+    """UPDATE condicional: nunca toma um apartamento que já tem outro proprietário."""
+    return (
+        _scoped(tenant_id)
+        .filter(id__in=list(apartment_ids))
+        .filter(Q(owner_id__isnull=True) | Q(owner_id=owner_id))
+        .update(owner_id=owner_id)
+    )
+
+
+def release_owner(tenant_id, owner_id, keep_ids=()) -> int:
+    return (
+        _scoped(tenant_id)
+        .filter(owner_id=owner_id)
+        .exclude(id__in=list(keep_ids))
+        .update(owner_id=None)
+    )

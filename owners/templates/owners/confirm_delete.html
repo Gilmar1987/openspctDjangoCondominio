@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Excluir proprietário — {{ tenant.name }}{% endblock %}
+{% block content %}
+  <div class="breadcrumb">
+    <a href="{% url 'condominiums:list' %}">Condomínios</a> /
+    <a href="{% url 'owners:list' tenant.id %}">{{ tenant.name }} · Proprietários</a>
+  </div>
+  <h1>Confirmar exclusão</h1>
+  <p>Excluir definitivamente o proprietário <strong>{{ owner.name }}</strong>? Esta ação não pode ser desfeita.</p>
+  <p>
+    {% if count == 0 %}Nenhum apartamento será desvinculado.
+    {% elif count == 1 %}1 apartamento ficará sem proprietário.
+    {% else %}{{ count }} apartamentos ficarão sem proprietário.{% endif %}
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="danger">Excluir</button>
+    <a class="button secondary" href="{% url 'owners:list' tenant.id %}">Cancelar</a>
+  </form>
+{% endblock %}
