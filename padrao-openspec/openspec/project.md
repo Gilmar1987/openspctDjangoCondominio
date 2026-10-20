@@ -91,6 +91,21 @@ Navegador → Django (páginas e endpoints REST) → validação Pydantic → en
 | Observabilidade | Logs em console/stdout; sem monitoramento de erros; sem tracing | — |
 | Jobs/filas | Celery (broker Redis ou RabbitMQ, a decidir) | ADR-0011 |
 
+## Comandos de verificação
+
+Executados no repositório de código (`C:\openspec\tarefas`).
+
+| Finalidade | Comando | Observações |
+|---|---|---|
+| Instalar dependências | `docker compose up -d --build` | Instala o `requirements.txt` na imagem `web`; fora do Docker: `pip install -r requirements.txt` (Python 3.12) |
+| Executar localmente | `docker compose up -d` | Aplica as migrações ao subir; porta definida por `WEB_PORT` no `.env` (padrão 8000) |
+| Testes | `docker compose run --rm web pytest --cov --cov-config=.coveragerc` | Exige 100% de linhas e branches em `*/domain.py`; o CI (GitHub Actions) roda o mesmo |
+| Lint | Não aplicável | Decisão 5.3: o CI roda só testes unitários |
+| Typecheck/build | Não aplicável | Python sem typecheck adotado |
+| Migrações | `docker compose run --rm web python manage.py makemigrations --check --dry-run` | Falha se houver migração pendente; também roda no CI |
+| Auditoria de dependências | Não aplicável no MVP | Adotar uma ferramenta (ex.: `pip-audit`) exige change própria |
+| Varredura de secrets | Não aplicável no MVP | Adotar uma ferramenta (ex.: `gitleaks`) exige change própria; `.env` fora do git e `.env.example` sem valores reais |
+
 ## Development Conventions
 
 - **Idioma do código:** Inglês (classes, funções, variáveis, tabelas).
