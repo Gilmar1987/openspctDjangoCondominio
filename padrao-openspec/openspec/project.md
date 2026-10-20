@@ -63,8 +63,9 @@ Navegador → Django (páginas e endpoints REST) → validação Pydantic → en
 
 | Capability | Estado | Change relacionada |
 |---|---|---|
+| `condominios` — cadastro mínimo de condomínios (tenants) e resolução do tenant pela URL | Implementada | `2026-10-19-cadastro-de-apartamentos` |
+| `apartamentos` — cadastro de unidades (torre, bloco, andar, número) por condomínio | Implementada | `2026-10-19-cadastro-de-apartamentos` |
 | Cadastro de proprietários | Planejada | — |
-| Cadastro de apartamentos | Planejada | — |
 | Cadastro de moradores | Planejada | — |
 
 ## Key Constraints
