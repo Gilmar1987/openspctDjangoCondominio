@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ tenant.name }}{% endblock %}
+{% block content %}
+  <div class="breadcrumb">
+    <a href="{% url 'condominiums:list' %}">Condomínios</a> /
+    <a href="{% url 'residents:list' tenant.id %}">{{ tenant.name }} · Moradores</a>
+  </div>
+  <h1>{{ title }}</h1>
+  {% if creating and owners %}
+    <form method="get" class="toolbar">
+      <label for="proprietario">Preencher a partir do proprietário</label>
+      <select id="proprietario" name="proprietario">
+        <option value="">—</option>
+        {% for owner in owners %}
+          <option value="{{ owner.id }}"{% if prefill_owner == owner.id|stringformat:"s" %} selected{% endif %}>{{ owner.name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="button secondary">Preencher</button>
+    </form>
+  {% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="field">
+      <label for="name">Nome</label>
+      <input id="name" name="name" type="text" value="{{ values.name|default_if_none:'' }}">
+      {% if errors.name %}<ul class="field-error">{% for error in errors.name %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <div class="field">
+      <label for="cpf">CPF</label>
+      <input id="cpf" name="cpf" type="text" inputmode="numeric" autocomplete="off" value="{{ values.cpf|default_if_none:'' }}">
+      {% if errors.cpf %}<ul class="field-error">{% for error in errors.cpf %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <div class="field">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="text" value="{{ values.email|default_if_none:'' }}">
+      {% if errors.email %}<ul class="field-error">{% for error in errors.email %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <div class="field">
+      <label for="phone">Telefone</label>
+      <input id="phone" name="phone" type="text" inputmode="tel" value="{{ values.phone|default_if_none:'' }}">
+      {% if errors.phone %}<ul class="field-error">{% for error in errors.phone %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <div class="field">
+      <label for="apartment_id">Apartamento onde mora</label>
+      <select id="apartment_id" name="apartment_id">
+        <option value="">Selecione</option>
+        {% for apartment in apartments %}
+          <option value="{{ apartment.id }}"{% if values.apartment_id|stringformat:"s" == apartment.id|stringformat:"s" %} selected{% endif %}>{{ apartment.label }}</option>
+        {% endfor %}
+      </select>
+      {% if errors.apartment_id %}<ul class="field-error">{% for error in errors.apartment_id %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    <button type="submit">Salvar</button>
+    <a class="button secondary" href="{% url 'residents:list' tenant.id %}">Cancelar</a>
+  </form>
+{% endblock %}

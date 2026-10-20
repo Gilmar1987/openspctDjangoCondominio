@@ -101,3 +101,17 @@ def test_subclass_inherits_create_and_update():
 def test_duplicate_cpf_message_uses_role_label():
     assert str(DuplicateCpfError(Resident.ROLE_LABEL)) == "Já existe morador com este CPF neste condomínio."
     assert Person.ROLE_LABEL == "pessoa"
+
+
+@dataclass(frozen=True)
+class WithUnit(Person):
+    unit: str
+
+
+def test_subclass_own_attributes_pass_through_create_and_update():
+    person = WithUnit.create(TENANT, name="Ana", cpf="52998224725", unit="101")
+
+    updated = person.with_id(uuid.uuid4()).update(name="Ana", cpf="52998224725", email=None, phone=None, unit="102")
+
+    assert (person.unit, updated.unit) == ("101", "102")
+    assert isinstance(updated, WithUnit)

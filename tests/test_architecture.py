@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-BUSINESS_APPS = ("condominiums", "apartments", "owners")
+BUSINESS_APPS = ("condominiums", "apartments", "owners", "residents")
 PLATFORM_ALLOWED = {
     "tenancy": {"tenancy.public"},
     "people": {"people.domain", "people.models", "people.inputs"},

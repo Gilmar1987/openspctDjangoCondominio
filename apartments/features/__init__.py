@@ -3,6 +3,7 @@ from typing import Optional
 from apartments.domain import Apartment, DuplicateApartmentError
 from apartments.inputs import OWNER_NOT_FOUND
 from owners import public as owners
+from residents import public as residents
 from tenancy.public import TenantRef
 
 DUPLICATE_FIELD = "apartment"
@@ -24,7 +25,7 @@ def owner_names(tenant: TenantRef, apartments: list[Apartment]) -> dict:
     return owners.names_by_id(tenant.id, ids) if ids else {}
 
 
-def as_json(apartment: Apartment, owner_name: Optional[str] = None) -> dict:
+def as_json(apartment: Apartment, owner_name: Optional[str] = None, resident_count: int = 0) -> dict:
     return {
         "id": str(apartment.id),
         "condominium_id": str(apartment.tenant_id),
@@ -34,11 +35,22 @@ def as_json(apartment: Apartment, owner_name: Optional[str] = None) -> dict:
         "number": apartment.number,
         "owner_id": str(apartment.owner_id) if apartment.owner_id else None,
         "owner_name": owner_name,
+        "resident_count": resident_count,
     }
 
 
 def as_json_with_owner(tenant: TenantRef, apartment: Apartment) -> dict:
-    return as_json(apartment, owner_names(tenant, [apartment]).get(apartment.owner_id))
+    return as_json(
+        apartment,
+        owner_names(tenant, [apartment]).get(apartment.owner_id),
+        residents.count_in_apartment(tenant.id, apartment.id),
+    )
+
+
+class ApartmentHasResidentsError(Exception):
+    def __init__(self, count: int):
+        noun = "morador" if count == 1 else "moradores"
+        super().__init__(f"Este apartamento tem {count} {noun} e precisa ficar sem moradores antes de ser excluído.")
 
 
 def form_values(apartment: Apartment) -> dict:

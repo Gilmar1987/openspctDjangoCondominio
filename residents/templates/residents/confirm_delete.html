@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Excluir morador — {{ tenant.name }}{% endblock %}
+{% block content %}
+  <div class="breadcrumb">
+    <a href="{% url 'condominiums:list' %}">Condomínios</a> /
+    <a href="{% url 'residents:list' tenant.id %}">{{ tenant.name }} · Moradores</a>
+  </div>
+  <h1>Confirmar exclusão</h1>
+  <p>Excluir definitivamente o morador <strong>{{ resident.name }}</strong>? Esta ação não pode ser desfeita.
+    Um cadastro de proprietário da mesma pessoa não é afetado.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="danger">Excluir</button>
+    <a class="button secondary" href="{% url 'residents:list' tenant.id %}">Cancelar</a>
+  </form>
+{% endblock %}
