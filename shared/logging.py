@@ -10,8 +10,12 @@ import re
 _BOUNDARY_START = r"(?<![\w.-])"
 _BOUNDARY_END = r"(?![\w-])"
 
+# Todos os quantificadores são limitados para o filtro ser linear no tamanho da mensagem:
+# ele roda em todo log, inclusive com URLs enviadas por quem acessa a aplicação.
+# E-mail: parte local até 64 e rótulos de domínio até 63 caracteres (RFC 5321).
+_EMAIL = re.compile(r"[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,8}")
+
 _PATTERNS = (
-    (re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"), "***@***"),
     (re.compile(_BOUNDARY_START + r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}" + _BOUNDARY_END), "***.***.***-**"),
     (re.compile(r"\(\d{2}\)\s?\d{4,5}-?\d{4}" + _BOUNDARY_END), "(**) *****-****"),
     (re.compile(_BOUNDARY_START + r"\d{10,11}" + _BOUNDARY_END), "***********"),
@@ -19,6 +23,8 @@ _PATTERNS = (
 
 
 def redact(text: str) -> str:
+    if "@" in text:
+        text = _EMAIL.sub("***@***", text)
     for pattern, replacement in _PATTERNS:
         text = pattern.sub(replacement, text)
     return text
