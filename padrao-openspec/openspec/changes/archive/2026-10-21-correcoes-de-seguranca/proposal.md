@@ -60,8 +60,9 @@ A mesma revisão apontou CSRF e XSS como "High", mas os dois foram descartados: 
 
 ## Aprovação
 
-- Responsável: Pendente
-- Data: —
-- Escopo: —
+- Responsável: gilmar campelo
+- Data: 2026-10-21
+- Escopo: apply
 - Condições: —
-- Origem: —
+- Origem: "Eu, gilmar campelo, aprovo a change correcoes-de-seguranca para apply."
+- Archive: 2026-10-21; Origem: pergunta "A aprovação desta change cobre só o apply. Você confirma o arquivamento da change correcoes-de-seguranca (mover para changes/archive e commitar no store; sem push)?", resposta "Sim, confirmo o arquivamento"
