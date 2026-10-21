@@ -103,7 +103,7 @@ Executados no repositório de código (`C:\openspec\tarefas`).
 | Lint | Não aplicável | Decisão 5.3: o CI roda só testes unitários |
 | Typecheck/build | Não aplicável | Python sem typecheck adotado |
 | Migrações | `docker compose run --rm web python manage.py makemigrations --check --dry-run` | Falha se houver migração pendente; também roda no CI |
-| Auditoria de dependências | Não aplicável no MVP | Adotar uma ferramenta (ex.: `pip-audit`) exige change própria |
+| Auditoria de dependências | `pip install pip-audit==2.10.1` e `pip-audit -r requirements.txt --progress-spinner off` | Bloqueante no CI (ADR-0018); exceção só com `--ignore-vuln <ID>` justificada no workflow |
 | Varredura de secrets | Não aplicável no MVP | Adotar uma ferramenta (ex.: `gitleaks`) exige change própria; `.env` fora do git e `.env.example` sem valores reais |
 
 ## Development Conventions
