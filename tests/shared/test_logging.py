@@ -55,3 +55,37 @@ def test_filter_handles_non_string_message():
     PersonalDataFilter().filter(record)
 
     assert "52998224725" not in record.getMessage()
+
+
+# Desempenho: o filtro roda em todo log, então precisa ser linear (change correcoes-de-seguranca).
+
+import time
+
+WORST_CASES = {
+    "sem-arroba": "a." * 50_000,
+    "arroba-no-fim": "a." * 50_000 + "@",
+    "so-digitos": "1" * 100_000,
+    "telefones": "(81) " * 20_000,
+}
+
+
+@pytest.mark.parametrize("text", WORST_CASES.values(), ids=WORST_CASES.keys())
+def test_redact_is_linear_on_worst_cases(text):
+    start = time.perf_counter()
+    redact(text)
+
+    assert time.perf_counter() - start < 0.5
+
+
+def test_email_with_64_char_local_part_is_masked():
+    email = "a" * 64 + "@exemplo.com"
+
+    assert email not in redact(f"contato {email}")
+
+
+def test_long_domain_label_does_not_hang():
+    text = "x@" + "d" * 70 + ".com"
+    start = time.perf_counter()
+    redact(text)
+
+    assert time.perf_counter() - start < 0.5
